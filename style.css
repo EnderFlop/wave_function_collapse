@@ -1,23 +1,78 @@
-body {
-  height: 100%; 
-  overflow: hidden; 
+* {
   margin: 0;
-  background-color: rgb(68, 68, 68);
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1a1a2e;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: #e0e0e0;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+h1 {
+  font-size: 1.6rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #c4b5fd;
+}
+
+#controls {
+  display: flex;
+  gap: 10px;
+}
+
+#controls button {
+  padding: 8px 20px;
+  border: 1px solid #7c3aed;
+  border-radius: 6px;
+  background: transparent;
+  color: #c4b5fd;
+  font-size: 0.85rem;
+  font-family: inherit;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+#controls button:hover:not(:disabled) {
+  background: #7c3aed;
+  color: #fff;
+}
+
+#controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 #container {
   display: grid;
   grid-template-columns: repeat(var(--cols), 14px);
   grid-template-rows: repeat(var(--rows), 28px);
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .cell {
   width: 14px;
   height: 28px;
   overflow: hidden;
-
   text-align: center;
   line-height: 28px;
   font-size: xx-large;
   font-family: monospace;
+  color: #e0e0e0;
 }

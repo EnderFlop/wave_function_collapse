@@ -1,22 +1,58 @@
+let grid = null
+let runInterval = null
+
+const WIDTH = 23
+const HEIGHT = 11
+
 window.addEventListener('DOMContentLoaded', () => {
-  WIDTH = window.innerWidth
-  HEIGHT = window.innerHeight
+  const btnStart = document.getElementById("btn-start")
+  const btnStop  = document.getElementById("btn-stop")
+  const btnStep  = document.getElementById("btn-step")
+  const btnReset = document.getElementById("btn-reset")
 
-  main()
-})
+  reset()
 
-async function main() {
-  const width = 23
-  const height = 11
-  const grid = new Grid(width, height)
+  btnStart.addEventListener("click", () => {
+    if (runInterval || grid.unobservedCellCount <= 0) return
+    btnStart.disabled = true
+    btnStop.disabled = false
+    btnStep.disabled = true
+    runInterval = setInterval(() => {
+      if (grid.unobservedCellCount <= 0) {
+        stop()
+        return
+      }
+      grid.step()
+    }, 80)
+  })
 
-  grid.observeCell(grid.cells[Math.floor(height / 2)][Math.floor(width / 2)])
+  btnStop.addEventListener("click", stop)
+  btnStep.addEventListener("click", () => {
+    if (grid.unobservedCellCount > 0) grid.step()
+  })
+  btnReset.addEventListener("click", reset)
 
-  while (grid.unobservedCellCount > 0) {
-    await new Promise(resolve => setTimeout(resolve, 100))
-    grid.step()
+  function stop() {
+    clearInterval(runInterval)
+    runInterval = null
+    btnStart.disabled = grid.unobservedCellCount <= 0
+    btnStop.disabled = true
+    btnStep.disabled = grid.unobservedCellCount <= 0
   }
-}
+
+  function reset() {
+    if (runInterval) {
+      clearInterval(runInterval)
+      runInterval = null
+    }
+    document.getElementById("container").innerHTML = ""
+    grid = new Grid(WIDTH, HEIGHT)
+    grid.observeCell(grid.cells[Math.floor(HEIGHT / 2)][Math.floor(WIDTH / 2)])
+    btnStart.disabled = false
+    btnStop.disabled = true
+    btnStep.disabled = false
+  }
+})
 
 
 
@@ -66,7 +102,6 @@ class Grid {
 
   observeCell(cell) {
     cell.observe()
-    console.log(cell.state)
     this.propagateConstraints(cell)
     this.unobservedCellCount--
     this.renderHtml()
