@@ -47,7 +47,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(var(--cols), 14px);
   grid-template-rows: repeat(var(--rows), 28px);
-  background-color: #555555;
+  background-color: #333333;
   border: 1px solid #333;
   border-radius: 6px;
   overflow: hidden;

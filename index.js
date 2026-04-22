@@ -179,7 +179,7 @@ class Grid {
   }
 
   renderHtml() {
-    const entropyColors = { 4: "#7BB662", 8: "#FFD301", 16: "#D61F1F" }
+    const entropyColors = { 4: "#bbbbbb", 8: "#777777", 16: "#999999" }
     for (let h = 0; h < this.height; h++) {
       for (let w = 0; w < this.width; w++) {
         const cell = this.cells[h][w]
