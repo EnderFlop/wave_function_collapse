@@ -87,11 +87,10 @@ class Grid {
         const cell = document.createElement("div")
         cell.id = `cell-${w}-${h}`
         cell.className = "cell"
-        cell.style.backgroundColor = (w + h) % 2 == 0 ? `rgb(96, 56, 242)` : `rgb(119, 84, 247)`
-        cell.innerText = "@"
         container.appendChild(cell)
       }
     }
+    this.renderHtml()
   }
 
   step() {
@@ -164,11 +163,18 @@ class Grid {
   }
 
   renderHtml() {
+    const entropyColors = { 4: "#7BB662", 8: "#FFD301", 16: "#D61F1F" }
     for (let h = 0; h < this.height; h++) {
       for (let w = 0; w < this.width; w++) {
         const cell = this.cells[h][w]
         const div = document.getElementById(`cell-${w}-${h}`)
-        div.innerText = cell.state.boxChar
+        if (cell.observed) {
+          div.innerText = cell.state.boxChar
+          div.style.backgroundColor = ""
+        } else {
+          div.innerText = ""
+          div.style.backgroundColor = entropyColors[cell.possibleTransforms.length] || "#8a2a2a"
+        }
       }
     }
   }
@@ -188,7 +194,16 @@ class Cell {
 
   observe() {
     this.observed = true
-    this.state = this.possibleTransforms[Math.floor(Math.random() * this.possibleTransforms.length)]
+    const totalWeight = this.possibleTransforms.reduce((sum, t) => sum + t.weight, 0)
+    let roll = Math.random() * totalWeight
+    for (const t of this.possibleTransforms) {
+      roll -= t.weight
+      if (roll <= 0) {
+        this.state = t
+        return this.state
+      }
+    }
+    this.state = this.possibleTransforms[this.possibleTransforms.length - 1]
     return this.state
   }
 }
@@ -204,6 +219,13 @@ class Transform {
     this.down = this.encodingToBool(encoding[2])
     this.left = this.encodingToBool(encoding[3])
     this.boxChar = this.getBoxChar(encoding)
+    this.connections = [this.up, this.right, this.down, this.left].filter(Boolean).length
+    this.weight = this.getWeight()
+  }
+
+  getWeight() {
+    const weights = { 0: 0.05, 1: 0.15, 2: 1, 3: 1, 4: 1 }
+    return weights[this.connections]
   }
 
   encodingToBool(char) {
