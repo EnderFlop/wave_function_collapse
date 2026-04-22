@@ -6,18 +6,18 @@ body {
 }
 
 #container {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 14px);
+  grid-template-rows: repeat(var(--rows), 28px);
 }
 
-
-#cell {
-  width: 30px;
-  height: 30px;
-  background-color: rgba(16, 158, 104, 0.562);
+.cell {
+  width: 14px;
+  height: 28px;
+  overflow: hidden;
 
   text-align: center;
-  vertical-align: middle;
-  line-height: 30px;
-  font-size: xx-large
-
+  line-height: 28px;
+  font-size: xx-large;
+  font-family: monospace;
 }
