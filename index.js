@@ -5,6 +5,30 @@ let STEP_MS = 80
 let WIDTH = 69
 let HEIGHT = 35
 
+const ENTROPY_COLORS = { 4: "#bbbbbb", 8: "#777777", 16: "#999999" }
+
+const BOX_CHARS = {
+  "0000": ' ',
+  "0001": '╴',
+  "0010": '╷',
+  "0011": '┐',
+  "0100": '╶',
+  "0101": '─',
+  "0110": '┌',
+  "0111": '┬',
+  "1000": '╵',
+  "1001": '┘',
+  "1010": '│',
+  "1011": '┤',
+  "1100": '└',
+  "1110": '├',
+  "1101": '┴',
+  "1111": '┼'
+}
+
+// Weight by number of connections: fewer connections = less likely to be chosen
+const WEIGHTS = { 0: 0.05, 1: 0.35, 2: 1, 3: 1, 4: 1 }
+
 window.addEventListener('DOMContentLoaded', () => {
   const btnStart = document.getElementById("btn-start")
   const btnStop  = document.getElementById("btn-stop")
@@ -76,18 +100,18 @@ class Grid {
   constructor(width, height) {
     this.width = width
     this.height = height
-    this.transforms = generateTransforms()
     this.cells = this.initCells()
     this.unobservedCellCount = width * height
     this.initHtml()
   }
 
   initCells() {
+    const allTransforms = Transform.generateAll()
     const cells = []
-    for (let h = 0; h < this.height; h++) {
+    for (let y = 0; y < this.height; y++) {
       cells.push([])
-      for (let w = 0; w < this.width; w++) {
-        cells[h].push(new Cell(w, h, this.transforms))
+      for (let x = 0; x < this.width; x++) {
+        cells[y].push(new Cell(x, y, allTransforms))
       }
     }
     return cells
@@ -98,19 +122,19 @@ class Grid {
     container.style.setProperty("--cols", this.width)
     container.style.setProperty("--rows", this.height)
 
-    for (let h = 0; h < this.height; h++) {
-      for (let w = 0; w < this.width; w++) {
-        const cell = document.createElement("div")
-        cell.id = `cell-${w}-${h}`
-        cell.className = "cell"
-        container.appendChild(cell)
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const div = document.createElement("div")
+        div.id = `cell-${x}-${y}`
+        div.className = "cell"
+        container.appendChild(div)
       }
     }
-    this.renderHtml()
+    this.render()
   }
 
   step() {
-    const cell = this.getMostLikelyCell()
+    const cell = this.getLowestEntropyCell()
     if (!cell) return
     this.observeCell(cell)
   }
@@ -119,28 +143,26 @@ class Grid {
     cell.observe()
     this.propagateConstraints(cell)
     this.unobservedCellCount--
-    this.renderHtml()
+    this.render()
   }
 
-
-  getMostLikelyCell() {
-    let bestCells = []
-    let bestScore = Infinity
-    for (let h = 0; h < this.height; h++) {
-      for (let w = 0; w < this.width; w++) {
-        const cell = this.cells[h][w]
+  getLowestEntropyCell() {
+    let candidates = []
+    let lowestEntropy = Infinity
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const cell = this.cells[y][x]
         if (cell.observed) continue
-        const score = cell.possibleTransforms.length
-        if (score < bestScore) {
-          bestScore = score
-          bestCells = [cell]
-        } else if (score === bestScore) {
-          bestCells.push(cell)
+        const entropy = cell.possibleTransforms.length
+        if (entropy < lowestEntropy) {
+          lowestEntropy = entropy
+          candidates = [cell]
+        } else if (entropy === lowestEntropy) {
+          candidates.push(cell)
         }
       }
     }
-    const bestCell = bestCells[Math.floor(Math.random() * bestCells.length)]
-    return bestCell
+    return candidates[Math.floor(Math.random() * candidates.length)]
   }
 
   propagateConstraints(cell) {
@@ -167,29 +189,17 @@ class Grid {
     }
   }
 
-  getNeighbors(cell) {
-    const neighbors = []
-    const x = cell.x
-    const y = cell.y
-    if (y > 0) neighbors.push(this.cells[y - 1][x])
-    if (y < this.height - 1) neighbors.push(this.cells[y + 1][x])
-    if (x > 0) neighbors.push(this.cells[y][x - 1])
-    if (x < this.width - 1) neighbors.push(this.cells[y][x + 1])
-    return neighbors
-  }
-
-  renderHtml() {
-    const entropyColors = { 4: "#bbbbbb", 8: "#777777", 16: "#999999" }
-    for (let h = 0; h < this.height; h++) {
-      for (let w = 0; w < this.width; w++) {
-        const cell = this.cells[h][w]
-        const div = document.getElementById(`cell-${w}-${h}`)
+  render() {
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const cell = this.cells[y][x]
+        const div = document.getElementById(`cell-${x}-${y}`)
         if (cell.observed) {
           div.innerText = cell.state.boxChar
           div.style.backgroundColor = ""
         } else {
           div.innerText = ""
-          div.style.backgroundColor = entropyColors[cell.possibleTransforms.length] || "#8a2a2a"
+          div.style.backgroundColor = ENTROPY_COLORS[cell.possibleTransforms.length]
         }
       }
     }
@@ -197,12 +207,12 @@ class Grid {
 }
 
 class Cell {
-  constructor(x, y, startingTransforms) {
+  constructor(x, y, possibleTransforms) {
     this.x = x
     this.y = y
-    this.possibleTransforms = startingTransforms
+    this.possibleTransforms = possibleTransforms
     this.observed = false
-    this.state = this.possibleTransforms[0];
+    this.state = null
   }
 
   observe() {
@@ -213,68 +223,30 @@ class Cell {
       roll -= t.weight
       if (roll <= 0) {
         this.state = t
-        return this.state
+        return
       }
     }
     this.state = this.possibleTransforms[this.possibleTransforms.length - 1]
-    return this.state
   }
 }
 
 class Transform {
   constructor(encoding) {
-    //each cell can be pointing in any four of the possible directions.
-    // we will represent this with a four byte string, {UP RIGHT DOWN LEFT}
-    // 0000 will be no connections, 0110 will be right and down, 1111 will be four way
     this.encoding = encoding
-    this.up = this.encodingToBool(encoding[0])
-    this.right = this.encodingToBool(encoding[1])
-    this.down = this.encodingToBool(encoding[2])
-    this.left = this.encodingToBool(encoding[3])
-    this.boxChar = this.getBoxChar(encoding)
+    this.up    = encoding[0] === "1"
+    this.right = encoding[1] === "1"
+    this.down  = encoding[2] === "1"
+    this.left  = encoding[3] === "1"
+    this.boxChar = BOX_CHARS[encoding]
     this.connections = [this.up, this.right, this.down, this.left].filter(Boolean).length
-    this.weight = this.getWeight()
+    this.weight = WEIGHTS[this.connections]
   }
 
-  getWeight() {
-    const weights = { 0: 0.05, 1: 0.35, 2: 1, 3: 1, 4: 1 }
-    return weights[this.connections]
+  static generateAll() {
+    const transforms = []
+    for (let i = 0; i < 16; i++) {
+      transforms.push(new Transform(i.toString(2).padStart(4, "0")))
+    }
+    return transforms
   }
-
-  encodingToBool(char) {
-    return char === "1"
-  }
-
-  getBoxChar(encoding) {
-    const boxMap = {
-      "0000": ' ',
-      "0001": '╴', // left
-      "0010": '╷', // down
-      "0011": '┐',
-      "0100": '╶', // right
-      "0101": '─',
-      "0110": '┌',
-      "0111": '┬',
-      "1000": '╵', // up
-      "1001": '┘',
-      "1010": '│',
-      "1011": '┤',
-      "1100": '└',
-      "1110": '├',
-      "1101": '┴',
-      "1111": '┼'
-    };
-
-    return boxMap[encoding]
-  }
-}
-
-function generateTransforms() {
-  const transforms = []
-
-  for (let i = 0; i < 16; i++) {
-    transforms.push(new Transform(i.toString(2).padStart(4, "0")))
-  }
-
-  return transforms
 }
