@@ -2,44 +2,49 @@ window.addEventListener('DOMContentLoaded', () => {
   WIDTH = window.innerWidth
   HEIGHT = window.innerHeight
 
-  main()
+  setup()
+  mainLoop()
 })
 
-function main() {
+function setup() {
   // get possible cell states
-  const starting_transforms = generate_transforms()
+  const startingTransforms = generateTransforms()
 
   // initialize grid of cells
   const width = 11
   const height = 11
-  const grid = init_cells(width, height, starting_transforms)
-  const html = init_html(width, height)
+  const grid = initCells(width, height, startingTransforms)
+  const html = initHtml(width, height)
 
   // observe center cell
-  const center_cell = grid[Math.floor(height / 2)][Math.floor(width / 2)]
-  center_cell.observe()
+  const centerCell = grid[Math.floor(height / 2)][Math.floor(width / 2)]
+  centerCell.observe()
 
 
   //  while any cells are not yet observed (do as step?)
   //  find cell with lowest entropy (optimize: keep track of neighbor list so we don't scan shitty nodes over and over, or sort a list, or something)
 }
 
+function mainLoop() {
+  // get most likely next cell
+}
+
 class Cell {
-  constructor(x, y, starting_transforms) {
+  constructor(x, y, startingTransforms) {
     this.x = x
     this.y = y
-    this.possible_transforms = starting_transforms
+    this.possibleTransforms = startingTransforms
     this.observed = false
+    this.state = null;
   }
 
-  // needs function that scans neighbors and prunes possible_transforms
+  // needs function that scans neighbors and prunes possibleTransforms
   // need observe() function that collapses cell
 
   observe() {
-
+    this.observed = true
+    this.state = this.possibleTransforms[Math.floor(Math.random() * this.possibleTransforms.length)]
   }
-
-
 }
 
 class Transform {
@@ -48,18 +53,18 @@ class Transform {
     // we will represent this with a four byte string, {UP RIGHT DOWN LEFT}
     // 0000 will be no connections, 0110 will be right and down, 1111 will be four way
     this.encoding = encoding
-    this.up = this.encoding_to_bool(encoding[0])
-    this.right = this.encoding_to_bool(encoding[1])
-    this.down = this.encoding_to_bool(encoding[2])
-    this.left = this.encoding_to_bool(encoding[3])
-    this.box_char = this.get_box_char(encoding)
+    this.up = this.encodingToBool(encoding[0])
+    this.right = this.encodingToBool(encoding[1])
+    this.down = this.encodingToBool(encoding[2])
+    this.left = this.encodingToBool(encoding[3])
+    this.boxChar = this.getBoxChar(encoding)
   }
 
-  encoding_to_bool(char) {
+  encodingToBool(char) {
     return char === "1"
   }
 
-  get_box_char(encoding) {
+  getBoxChar(encoding) {
     const boxMap = {
       "0000": ' ',
       "0001": '╶', // left
@@ -83,7 +88,7 @@ class Transform {
   }
 }
 
-function generate_transforms() {
+function generateTransforms() {
   const transforms = []
 
   for (let i = 0; i < 16; i++) {
@@ -93,20 +98,20 @@ function generate_transforms() {
   return transforms
 }
 
-function init_cells(width, height, starting_transforms) {
+function initCells(width, height, startingTransforms) {
   const grid = []
 
   for (let h = 0; h < height; h++) {
     grid.push([])
     for (let w = 0; w < width; w++){
-      grid[h].push(new Cell(w, h, starting_transforms))
+      grid[h].push(new Cell(w, h, startingTransforms))
     }
   }
 
   return grid
 }
 
-function init_html(width, height) {
+function initHtml(width, height) {
   const container = document.getElementById("container")
 
   for (let h = 0; h < height; h++) {
