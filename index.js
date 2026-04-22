@@ -1,14 +1,32 @@
 let grid = null
 let runInterval = null
 
-const WIDTH = 23
-const HEIGHT = 11
+let STEP_MS = 80
+let WIDTH = 69
+let HEIGHT = 35
 
 window.addEventListener('DOMContentLoaded', () => {
   const btnStart = document.getElementById("btn-start")
   const btnStop  = document.getElementById("btn-stop")
   const btnStep  = document.getElementById("btn-step")
   const btnReset = document.getElementById("btn-reset")
+
+  const speed = document.getElementById("speed")
+  const width = document.getElementById("width")
+  const height = document.getElementById("height")
+
+  speed.addEventListener("input", () => {
+    STEP_MS = speed.value
+    reset()
+  })
+  width.addEventListener("input", () => {
+    WIDTH = width.value
+    reset()
+  })
+  height.addEventListener("input", () => {
+    HEIGHT = height.value
+    reset()
+  })
 
   reset()
 
@@ -23,7 +41,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return
       }
       grid.step()
-    }, 80)
+    }, STEP_MS)
   })
 
   btnStop.addEventListener("click", stop)
@@ -53,8 +71,6 @@ window.addEventListener('DOMContentLoaded', () => {
     btnStep.disabled = false
   }
 })
-
-
 
 class Grid {
   constructor(width, height) {
@@ -188,9 +204,6 @@ class Cell {
     this.observed = false
     this.state = this.possibleTransforms[0];
   }
-
-  // needs function that scans neighbors and prunes possibleTransforms
-  // need observe() function that collapses cell
 
   observe() {
     this.observed = true
