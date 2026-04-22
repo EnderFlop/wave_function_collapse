@@ -237,7 +237,7 @@ class Transform {
   }
 
   getWeight() {
-    const weights = { 0: 0.05, 1: 0.15, 2: 1, 3: 1, 4: 1 }
+    const weights = { 0: 0.05, 1: 0.35, 2: 1, 3: 1, 4: 1 }
     return weights[this.connections]
   }
 
