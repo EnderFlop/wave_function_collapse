@@ -1,7 +1,10 @@
 let grid = null
 let runInterval = null
+let restartTimeout = null
 
-const SPEED_SLIDER_MIN = 10
+const RESTART_DELAY_MS = 5000
+
+const SPEED_SLIDER_MIN = 40
 const SPEED_SLIDER_MAX = 1000
 
 function stepMsFromSpeedSlider(value) {
@@ -70,7 +73,13 @@ window.addEventListener('DOMContentLoaded', () => {
     btnStep.disabled = true
     runInterval = setInterval(() => {
       if (grid.unobservedCellCount <= 0) {
-        stop()
+        clearInterval(runInterval)
+        runInterval = null
+        restartTimeout = setTimeout(() => {
+          restartTimeout = null
+          reset()
+          btnStart.click()
+        }, RESTART_DELAY_MS)
         return
       }
       grid.step()
@@ -86,6 +95,10 @@ window.addEventListener('DOMContentLoaded', () => {
   function stop() {
     clearInterval(runInterval)
     runInterval = null
+    if (restartTimeout) {
+      clearTimeout(restartTimeout)
+      restartTimeout = null
+    }
     btnStart.disabled = grid.unobservedCellCount <= 0
     btnStop.disabled = true
     btnStep.disabled = grid.unobservedCellCount <= 0
@@ -95,6 +108,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (runInterval) {
       clearInterval(runInterval)
       runInterval = null
+    }
+    if (restartTimeout) {
+      clearTimeout(restartTimeout)
+      restartTimeout = null
     }
     document.getElementById("container").innerHTML = ""
     grid = new Grid(WIDTH, HEIGHT)
