@@ -226,16 +226,19 @@ class Cell {
 
   observe() {
     this.observed = true
+    // Imagine lining up every possible transform on a number line.
+    // Each one takes up a slice as wide as its `weight`.
+    // We pick a random point on that line — whichever slice we land
+    // in, that's our transform.
     const totalWeight = this.possibleTransforms.reduce((sum, t) => sum + t.weight, 0)
-    let roll = Math.random() * totalWeight
+    let pick = Math.random() * totalWeight
     for (const t of this.possibleTransforms) {
-      roll -= t.weight
-      if (roll <= 0) {
+      pick -= t.weight
+      if (pick <= 0) {
         this.state = t
         return
       }
     }
-    this.state = this.possibleTransforms[this.possibleTransforms.length - 1]
   }
 }
 
