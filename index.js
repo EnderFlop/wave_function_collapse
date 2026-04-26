@@ -1,9 +1,16 @@
 let grid = null
 let runInterval = null
 
-let STEP_MS = 80
-let WIDTH = 69
-let HEIGHT = 35
+const SPEED_SLIDER_MIN = 10
+const SPEED_SLIDER_MAX = 1000
+
+function stepMsFromSpeedSlider(value) {
+  return SPEED_SLIDER_MIN + SPEED_SLIDER_MAX - Number(value)
+}
+
+let STEP_MS
+let WIDTH = 33
+let HEIGHT = 7
 
 const ENTROPY_COLORS = { 4: "#bbbbbb", 8: "#777777", 16: "#999999" }
 
@@ -39,8 +46,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const width = document.getElementById("width")
   const height = document.getElementById("height")
 
+  STEP_MS = stepMsFromSpeedSlider(speed.value)
+
   speed.addEventListener("input", () => {
-    STEP_MS = speed.value
+    STEP_MS = stepMsFromSpeedSlider(speed.value)
     reset()
   })
   width.addEventListener("input", () => {
