@@ -15,7 +15,7 @@ let STEP_MS
 let WIDTH = 33
 let HEIGHT = 7
 
-const ENTROPY_COLORS = { 4: "#bbbbbb", 8: "#777777", 16: "#999999" }
+const ENTROPY_COLORS = { 4: "#555555", 8: "#777777", 16: "#999999" }
 
 const BOX_CHARS = {
   "0000": ' ',
@@ -75,6 +75,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (grid.unobservedCellCount <= 0) {
         clearInterval(runInterval)
         runInterval = null
+        grid.render()
         restartTimeout = setTimeout(() => {
           restartTimeout = null
           reset()
@@ -169,7 +170,7 @@ class Grid {
     cell.observe()
     this.propagateConstraints(cell)
     this.unobservedCellCount--
-    this.render()
+    this.render([cell.x, cell.y])
   }
 
   getLowestEntropyCell() {
@@ -215,14 +216,15 @@ class Grid {
     }
   }
 
-  render() {
+  render(lastObservedCoord = null) {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const cell = this.cells[y][x]
         const div = document.getElementById(`cell-${x}-${y}`)
+        const isLast = lastObservedCoord && lastObservedCoord[0] === x && lastObservedCoord[1] === y
         if (cell.observed) {
           div.innerText = cell.state.boxChar
-          div.style.backgroundColor = ""
+          div.style.backgroundColor = isLast ? "#bbbbbb" : ""
         } else {
           div.innerText = ""
           div.style.backgroundColor = ENTROPY_COLORS[cell.possibleTransforms.length]
